@@ -1,27 +1,41 @@
-# Maintainer: Morten Linderud <morten@linderud.pw>
+# Maintainer: David Manouchehri <manouchehri@riseup.net>
+# Contributor: Morten Linderud <morten@linderud.pw>
 # Contributor: Andreas Krinke <andreas dot krinke at gmx dot de>
-pkgname=gephi
-pkgver=0.8.2beta
+
+_gitname=gephi
+pkgname="${_gitname}-git"
+_gitbranch=master
+_gitauthor=gephi
+pkgver=r3812.d17eb89
 pkgrel=1
 pkgdesc="An interactive graph visualization and exploration platform"
-arch=('i686' 'x86_64')
-url="http://gephi.org"
+url="https://gephi.github.io/"
 license=('CDDL' 'GPL3')
+source=("git://github.com/${_gitauthor}/${_gitname}#branch=${_gitbranch}")
+sha512sums=('SKIP')
+arch=('armv6h' 'armv7h' 'i686' 'x86_64')
 depends=('java-runtime' 'libxxf86vm' 'jdk7-openjdk')
-makedepends=()
-options=(!strip)
-source=("http://launchpad.net/gephi/0.8/0.8.2beta/+download/gephi-0.8.2-beta.tar.gz")
-sha256sums=('cc07dc6059f9a94dd729d8edfda230f95bc25d91dce17d94d73e5ead289bb365')
+makedepends=('git' 'maven')
+conflicts=("${_gitname}")
+provides=("${_gitname}")
 
-package() {
-  cd "$srcdir/$pkgname"
-
-  mkdir -p "$pkgdir/opt/$pkgname"
-  cp -r * "$pkgdir/opt/$pkgname"
-  chmod -R 755 "$pkgdir/opt/$pkgname"
-  sed -i -e 's/#jdkhome.*/jdkhome=\"\/usr\/lib\/jvm\/java-7-openjdk\"/g' $pkgdir/opt/$pkgname/etc/gephi.conf
-  mkdir -p "$pkgdir/usr/bin"
-  ln -s "/opt/$pkgname/bin/gephi" "$pkgdir/usr/bin"
+pkgver() {
+  cd "${srcdir}/${_gitname}"
+  (
+    set -o pipefail
+    git describe --long 2>/dev/null | sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+      printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+  )
 }
 
-# vim:set ts=2 sw=2 et:
+build() {
+  cd "${srcdir}/${_gitname}"
+  mvn clean install
+}
+
+package() {
+  cd "${srcdir}/${_gitname}"
+  exit 1
+}
+
+# vim:set et sw=2 sts=2 tw=80:
